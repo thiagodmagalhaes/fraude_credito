@@ -54,12 +54,25 @@ def limpeza_dataframe(df):
         colunas = df.columns
         for coluna in colunas:
             df = df.withColumn(coluna, F.when(F.col(coluna).isNotNull(), F.trim(F.col(coluna))).otherwise(F.col(coluna)))
+        df = df.withColumn("risk_score", 
+                            F.when(F.col("risk_score")== "none", F.lit(None)).otherwise(F.col("risk_score").cast("double")))
         df = df.dropDuplicates()
         df = df.fillna({"location_region": "DESCONHECIDO", "risk_score":0, "amount":0})
         print("Limpeza concluida!!!")
         return df
     except Exception as e:
         print(f"Erro ao realizar limpeza dos dados: {e}")
+        raise e
+
+def media_risco(df):
+    try:
+        df_mediarisco = (df.groupBy("location_region")
+                         .agg(F.avg("risk_score").alias("media_risco"))
+                         .orderBy(F.col("media_risco").desc()))
+        return df_mediarisco
+    
+    except Exception as e:
+        print(f"Erro ao calcular média de risco: {e}")
         raise e
 
 def main():
@@ -69,7 +82,8 @@ def main():
         diretorio = rf"C:\Users\Abrasel Nacional\Desktop\TESTE\fraude_credito\data\input\df_fraud_credit.csv"
         df = ler_arquivo_csv(spark, diretorio)
         df = limpeza_dataframe(df)
-        df.show(10, truncate=False)
+        df_mediarisco = media_risco(df)
+        df_mediarisco.show(10, truncate=False)
 
     except Exception as e:
         print(f"EXECUÇÕO INTERROMPIDA!!!  Erro na execução do código: {e}")
