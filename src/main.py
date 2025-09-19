@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
+from pyspark.sql.types import StringType, NumericType, DateType, TimestampType, BooleanType
 
 def criar_sessao_spark():
     '''
@@ -106,16 +107,52 @@ def tabela_top3_transacoes(df):
         print(f"Erro ao gerar top 3 transações: {e}")
         raise e
 
+def indicadores_qualidade(df, spark):
+    """Gera indicadores básicos de qualidade e retorna como DataFrame"""
+    try:
+        print("Iniciando cálculo dos indicadores de qualidade...")
+        total_registros = df.count()
+        print(f"Total de registros: {total_registros}")
+        erros_por_coluna = {}
+        for coluna in df.columns:
+            tipo = df.schema[coluna].dataType  
+            if isinstance(tipo, StringType):
+                qtd_erros = df.filter(F.col(coluna).isNull() | (F.trim(F.col(coluna)) == "") | (F.col(coluna.lower()) == "none")).count()
+            elif isinstance(tipo, NumericType):
+                qtd_erros = df.filter(F.col(coluna).isNull()).count()
+            elif isinstance(tipo, (DateType, TimestampType)):
+                qtd_erros = df.filter(F.col(coluna).isNull()).count()
+            elif isinstance(tipo, BooleanType):
+                qtd_erros = df.filter(F.col(coluna).isNull()).count()
+            else:
+                qtd_erros = df.filter(F.col(coluna).isNull()).count()
+            erros_por_coluna[coluna] = qtd_erros
+        total_erros = sum(erros_por_coluna.values())
+        percentual_conformidade = round(((total_registros - total_erros) / total_registros) * 100, 2)
+        dados_resumo = [(total_registros, total_erros, float(percentual_conformidade))]
+        colunas_resumo = ["total_registros", "total_erros", "percentual_conformidade"]
+        df_resumo = spark.createDataFrame(dados_resumo, colunas_resumo)
+        print("Indicadores gerados com sucesso.")
+        return df_resumo
+
+    except Exception as e:
+        print(f"Erro ao gerar indicadores de qualidade: {e}")
+        raise
+
+
 def main():
     try:
         print("Iniciando execução do código. . .")
         spark = criar_sessao_spark()
         diretorio = rf"C:\Users\Abrasel Nacional\Desktop\TESTE\fraude_credito\data\input\df_fraud_credit.csv"
         df = ler_arquivo_csv(spark, diretorio)
+        df_indicador_qld= indicadores_qualidade(df,spark)
+        df_indicador_qld.show()
         df = limpeza_dataframe(df)
         df_mediarisco = media_risco(df)
         df_top3_transacoes = tabela_top3_transacoes(df)
-        df_top3_transacoes.show()
+
+
 
 
     except Exception as e:
