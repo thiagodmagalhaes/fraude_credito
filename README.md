@@ -63,28 +63,34 @@ Bibliotecas utilizadas
 
 📊 Exemplos de Saída
 
-Indicadores de Qualidade
+    Indicadores de Qualidade
 
-  total_registros   total_erros   percentual_conformidade
-  ----------------- ------------- -------------------------
-  10000             500           95.0 %
+      total_registros   total_erros   percentual_conformidade
+      ----------------- ------------- -------------------------
+      10000             500           95.0 %
 
-Média de Risco por Região
 
-  location_region   media_risco
-  ----------------- -------------
-  Africa                0.85
-  South America                0.72
 
-Top 3 Transações
 
-  receiving_address   amount   timestamp
-  ------------------- -------- ---------------------
-  X1A2B3C             1500     2025-09-15 10:00:00
-  Y4D5E6F             1200     2025-09-15 11:30:00
-  Z7G8H9I             1000     2025-09-15 12:45:00
+    Média de Risco por Região
 
-------------------------------------------------------------------------
+      location_region   media_risco
+      ----------------- -------------
+      Africa                0.85
+      South America         0.72
+
+
+
+
+
+    Top 3 Transações
+      receiving_address   amount   timestamp
+      ------------------- -------- ---------------------
+      X1A2B3C             1500     2025-09-15 10:00:00
+      Y4D5E6F             1200     2025-09-15 11:30:00
+      Z7G8H9I             1000     2025-09-15 12:45:00
+
+    -----------------------------------------------------
 
 🛠 Funções Principais
 
@@ -102,6 +108,5 @@ Top 3 Transações
 
 📧 Contato
 
-Caso tenha dúvidas ou sugestões, entre em contato: - Autor: Thiago Magalhães
-Tecnologia - E-mail: thiago.dmagalhaes@hotmail.com - GitHub:
+Caso tenha dúvidas ou sugestões, entre em contato: - Autor: Thiago MagalhãesE-mail: thiago.dmagalhaes@hotmail.com - GitHub:
 github.com/thiagodmagalhaes
