@@ -54,8 +54,10 @@ def limpeza_dataframe(df):
         colunas = df.columns
         for coluna in colunas:
             df = df.withColumn(coluna, F.when(F.col(coluna).isNotNull(), F.trim(F.col(coluna))).otherwise(F.col(coluna)))
+
         df = df.withColumn("risk_score", 
                             F.when(F.col("risk_score")== "none", F.lit(None)).otherwise(F.col("risk_score").cast("double")))
+        
         df = df.dropDuplicates()
         df = df.fillna({"location_region": "DESCONHECIDO", "risk_score":0, "amount":0})
         print("Limpeza concluida!!!")
@@ -74,6 +76,35 @@ def media_risco(df):
     except Exception as e:
         print(f"Erro ao calcular média de risco: {e}")
         raise e
+      
+def tabela_top3_transacoes(df):
+    """
+    Realiza o ranking dos TOP 3 transações, retornando o resultado em um dataframe rankeado.
+    Arg:
+        df(dataframe completo)
+    Return:
+        df_top3(dataframe rankeado apenas com receiving_address, amount, timestamp)
+    """
+    try:
+        print("Iniciando a filtragem dos TOP 3 de transações . . .")
+        df = df.withColumn("amount",
+            F.when((F.col("amount").isNull()) |(F.col("amount") == "") |
+                (F.lower(F.col("amount")) == "none") |(F.lower(F.col("amount")) == "null"),None).otherwise(F.col("amount"))) 
+        df = df.withColumn("amount", F.col("amount").cast("double"))
+        df = df.filter(F.col("amount").isNotNull())
+        df_filtrado = df.filter(F.col("transaction_type") == "sale")
+        df_ultimas_transacoes = (df_filtrado.groupBy("receiving_address").agg(F.max("timestamp").alias("max_timestamp")))
+        df_ultimas_transacoes = df_ultimas_transacoes.withColumnRenamed("receiving_address", "receiving_address_max")
+        df_ultimas_transacoes = df_ultimas_transacoes.withColumnRenamed("max_timestamp", "max_timestamp_ult")
+        df_mais_recente = df_filtrado.join(df_ultimas_transacoes,(df_filtrado.receiving_address == df_ultimas_transacoes.receiving_address_max) &
+            (df_filtrado.timestamp == df_ultimas_transacoes.max_timestamp_ult),"inner")
+        df_top3 = df_mais_recente.orderBy(F.col("amount").desc()).limit(3)
+        print("TOP 3 Obtido com sucesso!!!")
+        return df_top3.select("receiving_address", "amount", "timestamp")
+
+    except Exception as e:
+        print(f"Erro ao gerar top 3 transações: {e}")
+        raise e
 
 def main():
     try:
@@ -83,7 +114,9 @@ def main():
         df = ler_arquivo_csv(spark, diretorio)
         df = limpeza_dataframe(df)
         df_mediarisco = media_risco(df)
-        df_mediarisco.show(10, truncate=False)
+        df_top3_transacoes = tabela_top3_transacoes(df)
+        df_top3_transacoes.show()
+
 
     except Exception as e:
         print(f"EXECUÇÕO INTERROMPIDA!!!  Erro na execução do código: {e}")
