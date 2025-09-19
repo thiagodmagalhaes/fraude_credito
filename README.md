@@ -108,5 +108,5 @@ Bibliotecas utilizadas
 
 📧 Contato
 
-Caso tenha dúvidas ou sugestões, entre em contato: - Autor: Thiago MagalhãesE-mail: thiago.dmagalhaes@hotmail.com - GitHub:
-github.com/thiagodmagalhaes
+Autor: Thiago MagalhãesE-mail: thiago.dmagalhaes@hotmail.com 
+GitHub: github.com/thiagodmagalhaes
