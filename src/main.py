@@ -67,18 +67,21 @@ def limpeza_dataframe(df):
         print(f"Erro ao realizar limpeza dos dados: {e}")
         raise e
 
-def media_risco(df):
+def media_risco(df,spark):
     try:
         df_mediarisco = (df.groupBy("location_region")
                          .agg(F.avg("risk_score").alias("media_risco"))
                          .orderBy(F.col("media_risco").desc()))
+        print('Salvando o resultado em CSV...')
+        diretorio = rf"C:\Users\Abrasel Nacional\Desktop\TESTE\fraude_credito\data\output\media_risco"
+        salvar_arquivo_csv(spark,df_mediarisco,diretorio)
         return df_mediarisco
     
     except Exception as e:
         print(f"Erro ao calcular média de risco: {e}")
         raise e
       
-def tabela_top3_transacoes(df):
+def tabela_top3_transacoes(df,spark):
     """
     Realiza o ranking dos TOP 3 transações, retornando o resultado em um dataframe rankeado.
     Arg:
@@ -101,6 +104,9 @@ def tabela_top3_transacoes(df):
             (df_filtrado.timestamp == df_ultimas_transacoes.max_timestamp_ult),"inner")
         df_top3 = df_mais_recente.orderBy(F.col("amount").desc()).limit(3)
         print("TOP 3 Obtido com sucesso!!!")
+        print("Salvando resultado em CSV . . .")
+        diretorio = rf"C:\Users\Abrasel Nacional\Desktop\TESTE\fraude_credito\data\output\top3"
+        salvar_arquivo_csv(spark,df,diretorio)
         return df_top3.select("receiving_address", "amount", "timestamp")
 
     except Exception as e:
@@ -108,7 +114,13 @@ def tabela_top3_transacoes(df):
         raise e
 
 def indicadores_qualidade(df, spark):
-    """Gera indicadores básicos de qualidade e retorna como DataFrame"""
+    '''
+    Realiza a criacao dos indicadores de qualidade, verificando inconsistencia nos dados que estão nulos, vazios os preenchidos com none
+    Arg:
+        df, spark
+    Return: 
+        df_resumo
+    '''
     try:
         print("Iniciando cálculo dos indicadores de qualidade...")
         total_registros = df.count()
@@ -139,6 +151,22 @@ def indicadores_qualidade(df, spark):
         print(f"Erro ao gerar indicadores de qualidade: {e}")
         raise
 
+def salvar_arquivo_csv(spark, df, diretorio):
+    """
+    Salva um DataFrame em formato CSV no diretório informado.
+
+   Parâmetros:
+        spark,df, diretorio
+    """
+    try:
+        print(f"Salvando o arquivo no diretório: {diretorio}")
+        df.coalesce(1).write.mode("overwrite").option("header", True).csv(diretorio)
+        print("Arquivo salvo com sucesso!!!")
+
+    except Exception as e:
+        print(f"Erro ao salvar arquivo CSV: {e}")
+        raise
+
 
 def main():
     try:
@@ -149,10 +177,10 @@ def main():
         df_indicador_qld= indicadores_qualidade(df,spark)
         df_indicador_qld.show()
         df = limpeza_dataframe(df)
-        df_mediarisco = media_risco(df)
-        df_top3_transacoes = tabela_top3_transacoes(df)
-
-
+        df_mediarisco = media_risco(df,spark)
+        df_mediarisco.show()
+        df_top3_transacoes = tabela_top3_transacoes(df,spark)
+        df_top3_transacoes.show()
 
 
     except Exception as e:
